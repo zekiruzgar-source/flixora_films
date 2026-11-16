@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StreamFlix — Ana Sayfa</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Helvetica Neue', Arial, sans-serif; }
+  body { background: #141414; color: #fff; overflow-x: hidden; }
+
+  /* ================= NAVBAR ================= */
+  .navbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; gap: 28px;
+    padding: 18px 50px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
+    transition: background 0.3s;
+  }
+  .navbar.scrolled { background: #141414; }
+  .logo { font-size: 1.7rem; font-weight: 900; color: #e50914; letter-spacing: -1px; cursor: pointer; }
+  .nav-links { display: flex; gap: 20px; list-style: none; }
+  .nav-links a { color: #e5e5e5; text-decoration: none; font-size: 0.9rem; transition: color 0.2s; }
+  .nav-links a:hover { color: #b3b3b3; }
+  .nav-right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+  .nav-right .icon { font-size: 1.2rem; cursor: pointer; }
+  .avatar { width: 34px; height: 34px; border-radius: 4px; background: linear-gradient(135deg,#e50914,#7b2ff7); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
+
+  /* ================= HERO ================= */
+  .hero {
+    position: relative; height: 85vh; min-height: 500px;
+    background-image: url('https://image.tmdb.org/t/p/original/9O1Iy9od7uGQw6bYQ6c8h3s6QqT.jpg');
+    background-size: cover; background-position: center top;
+    display: flex; align-items: flex-end;
+  }
+  .hero::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(90deg, rgba(20,20,20,0.95) 0%, rgba(20,20,20,0.6) 40%, rgba(20,20,20,0) 70%),
+                linear-gradient(0deg, #141414 0%, rgba(20,20,20,0) 40%);
+  }
+  .hero-content { position: relative; z-index: 2; padding: 0 50px 80px; max-width: 600px; }
+  .hero-badge { display: inline-block; background: rgba(229,9,20,0.9); padding: 4px 10px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; letter-spacing: 1px; margin-bottom: 14px; }
+  .hero-title { font-size: 3.5rem; font-weight: 900; line-height: 1.1; margin-bottom: 16px; text-shadow: 2px 2px 8px rgba(0,0,0,0.7); }
+  .hero-meta { display: flex; gap: 14px; font-size: 0.85rem; color: #ccc; margin-bottom: 14px; }
+  .hero-desc { font-size: 1rem; line-height: 1.5; color: #ddd; margin-bottom: 24px; text-shadow: 1px 1px 4px rgba(0,0,0,0.7); }
+  .hero-buttons { display: flex; gap: 12px; }
+  .btn { display: flex; align-items: center; gap: 8px; padding: 12px 26px; border-radius: 6px; border: none; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-play { background: #fff; color: #000; }
+  .btn-play:hover { background: rgba(255,255,255,0.8); }
+  .btn-info { background: rgba(109,109,110,0.7); color: #fff; }
+  .btn-info:hover { background: rgba(109,109,110,0.5); }
+
+  /* ================= SATIRLAR ================= */
+  .rows { position: relative; z-index: 3; margin-top: -100px; padding-bottom: 60px; }
+  .row { margin-bottom: 34px; }
+  .row-title { font-size: 1.25rem; font-weight: 700; padding: 0 50px 12px; color: #e5e5e5; }
+  .row-container { position: relative; }
+  .row-posters {
+    display: flex; gap: 8px; padding: 0 50px;
+    overflow-x: auto; scroll-behavior: smooth;
+    scrollbar-width: none;
+  }
+  .row-posters::-webkit-scrollbar { display: none; }
+
+  .card {
+    position: relative; flex: 0 0 auto;
+    width: 220px; height: 124px;
+    border-radius: 6px; overflow: hidden;
+    cursor: pointer; transition: transform 0.3s, box-shadow 0.3s;
+    background: #222;
+  }
+  .card:hover { transform: scale(1.08); z-index: 10; box-shadow: 0 10px 30px rgba(0,0,0,0.7); }
+  .card img { width: 100%; height: 100%; object-fit: cover; }
+  .card-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 60%);
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 10px; opacity: 0; transition: opacity 0.3s;
+  }
+  .card:hover .card-overlay { opacity: 1; }
+  .card-overlay .title { font-size: 0.8rem; font-weight: 700; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-overlay .meta { font-size: 0.65rem; color: #bbb; }
+  .card-overlay .play-icon {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(229,9,20,0.9); display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+  }
+
+  /* Ok butonları */
+  .row-arrow {
+    position: absolute; top: 0; bottom: 0; width: 50px;
+    background: rgba(20,20,20,0.7); border: none; color: #fff;
+    font-size: 1.5rem; cursor: pointer; z-index: 5;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.2s;
+  }
+  .row-container:hover .row-arrow { opacity: 1; }
+  .row-arrow:hover { background: rgba(20,20,20,0.9); }
+  .row-arrow.left { left: 0; border-radius: 0 6px 6px 0; }
+  .row-arrow.right { right: 0; border-radius: 6px 0 0 6px; }
+
+  /* ================= FOOTER ================= */
+  .footer { padding: 40px 50px; color: #777; font-size: 0.8rem; border-top: 1px solid #222; }
+  .footer-links { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; }
+  .footer-links a { color: #777; text-decoration: none; }
+  .footer-links a:hover { text-decoration: underline; }
+
+  /* ================= MODAL ================= */
+  .modal {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.8); align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal.active { display: flex; }
+  .modal-content {
+    background: #181818; border-radius: 10px; max-width: 700px; width: 100%;
+    overflow: hidden; position: relative; animation: modalIn 0.3s ease;
+  }
+  @keyframes modalIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+  .modal-hero { height: 300px; background-size: cover; background-position: center; position: relative; }
+  .modal-hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(0deg, #181818 0%, rgba(24,24,24,0) 70%); }
+  .modal-close { position: absolute; top: 14px; right: 14px; z-index: 5; width: 36px; height: 36px; border-radius: 50%; background: rgba(24,24,24,0.9); border: none; color: #fff; font-size: 1.2rem; cursor: pointer; }
+  .modal-body { padding: 24px 32px 32px; }
+  .modal-body h2 { font-size: 1.8rem; margin-bottom: 12px; }
+  .modal-body .meta { display: flex; gap: 12px; color: #bbb; font-size: 0.85rem; margin-bottom: 16px; }
+  .modal-body p { color: #ccc; line-height: 1.6; font-size: 0.9rem; margin-bottom: 20px; }
+
+  /* ================= MOBİL ================= */
+  @media (max-width: 768px) {
+    .navbar { padding: 14px 20px; gap: 14px; }
+    .nav-links { display: none; }
+    .logo { font-size: 1.3rem; }
+    .hero { height: 70vh; }
+    .hero-content { padding: 0 20px 50px; }
+    .hero-title { font-size: 2rem; }
+    .hero-desc { font-size: 0.85rem; }
+    .row-title, .row-posters { padding-left: 20px; padding-right: 20px; }
+    .card { width: 150px; height: 85px; }
+    .footer { padding: 30px 20px; }
+    .row-arrow { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+  <div class="logo">STREAMFLIX</div>
+  <ul class="nav-links">
+    <li><a href="#">Ana Sayfa</a></li>
+    <li><a href="#">Diziler</a></li>
+    <li><a href="#">Filmler</a></li>
+    <li><a href="#">Yeni ve Popüler</a></li>
+    <li><a href="#">Listem</a></li>
+  </ul>
+  <div class="nav-right">
+    <span class="icon">🔍</span>
+    <span class="icon">🔔</span>
+    <div class="avatar">U</div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-content">
+    <span class="hero-badge">YENİ SEZON</span>
+    <h1 class="hero-title">Karanlık Şehir</h1>
+    <div class="hero-meta">
+      <span>2026</span><span>•</span><span>18+</span><span>•</span><span>8 Bölüm</span><span>•</span><span>Gerilim / Drama</span>
+    </div>
+    <p class="hero-desc">Bir dedektif, şehrin derinliklerinde saklanan bir sırrı çözmeye çalışırken kendi geçmişiyle yüzleşmek zorunda kalır. Her bölüm sizi daha da içine çekecek.</p>
+    <div class="hero-buttons">
+      <button class="btn btn-play" onclick="alert('Oynatılıyor...')">▶ Oynat</button>
+      <button class="btn btn-info" onclick="openModal('Karanlık Şehir','https://image.tmdb.org/t/p/original/9O1Iy9od7uGQw6bYQ6c8h3s6QqT.jpg','2026 • 18+ • 8 Bölüm • Gerilim/Drama','Bir dedektif, şehrin derinliklerinde saklanan bir sırrı çözmeye çalışırken kendi geçmişiyle yüzleşmek zorunda kalır. Her bölüm sizi daha da içine çekecek.')">ℹ Daha Fazla Bilgi</button>
+    </div>
+  </div>
+</section>
+
+<!-- SATIRLAR -->
+<div class="rows" id="rows"></div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-links">
+    <a href="#">Sesli Açıklama</a><a href="#">Yardım Merkezi</a><a href="#">Hediye Kartları</a>
+    <a href="#">Medya Merkezi</a><a href="#">Yatırımcı İlişkileri</a><a href="#">İş Fırsatları</a>
+    <a href="#">Kullanım Koşulları</a><a href="#">Gizlilik</a><a href="#">Çerez Tercihleri</a>
+  </div>
+  <p>© 2026 StreamFlix — Demo amaçlıdır, gerçek bir yayın hizmeti sunmaz.</p>
+</footer>
+
+<!-- MODAL -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <div class="modal-hero" id="modalHero">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <h2 id="modalTitle"></h2>
+      <div class="meta" id="modalMeta"></div>
+      <p id="modalDesc"></p>
+      <button class="btn btn-play" onclick="alert('Oynatılıyor...')">▶ Oynat</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==========================================================
+// 1. ÖRNEK İÇERİK VERİSİ
+// ==========================================================
+const rows = [
+  {
+    title: "Trend Olanlar",
+    items: [
+      { title: "Karanlık Şehir", img: "https://image.tmdb.org/t/p/w500/9O1Iy9od7uGQw6bYQ6c8h3s6QqT.jpg", meta: "Gerilim • 2026" },
+      { title: "Son Kale", img: "https://image.tmdb.org/t/p/w500/1N8V9Jc7kLqY6bYQ6c8h3s6QqT.jpg", meta: "Aksiyon • 2025" },
+      { title: "Gizli Dosya", img: "https://image.tmdb.org/t/p/w500/6X9kLqY6bYQ6c8h3s6QqT9O1Iy9.jpg", meta: "Polisiye • 2026" },
+      { title: "Yıldızlar Arası", img: "https://image.tmdb.org/t/p/w500/8kLqY6bYQ6c8h3s6QqT9O1Iy9od.jpg", meta: "Bilim Kurgu • 2024" },
+      { title: "Kayıp Ada", img: "https://image.tmdb.org/t/p/w500/3LqY6bYQ6c8h3s6QqT9O1Iy9od7.jpg", meta: "Macera • 2025" },
+      { title: "Son Nefes", img: "https://image.tmdb.org/t/p/w500/2Y6bYQ6c8h3s6QqT9O1Iy9od7u.jpg", meta: "Dram • 2026" },
+      { title: "Gölge Oyunu", img: "https://image.tmdb.org/t/p/w500/5bYQ6c8h3s6QqT9O1Iy9od7uG.jpg", meta: "Gerilim • 2025" },
+    ]
+  },
+  {
+    title: "Popüler Diziler",
+    items: [
+      { title: "Kırık Hayatlar", img: "https://image.tmdb.org/t/p/w500/7YQ6c8h3s6QqT9O1Iy9od7uGQ.jpg", meta: "Drama • 5 Sezon" },
+      { title: "Sınır Ötesi", img: "https://image.tmdb.org/t/p/w500/4c8h3s6QqT9O1Iy9od7uGQw6.jpg", meta: "Aksiyon • 3 Sezon" },
+      { title: "İkinci Şans", img: "https://image.tmdb.org/t/p/w500/9h3s6QqT9O1Iy9od7uGQw6bY.jpg", meta: "Romantik • 2 Sezon" },
+      { title: "Kod Adı: Anka", img: "https://image.tmdb.org/t/p/w500/6QqT9O1Iy9od7uGQw6bYQ6c8.jpg", meta: "Gerilim • 4 Sezon" },
+      { title: "Mahalle", img: "https://image.tmdb.org/t/p/w500/1Iy9od7uGQw6bYQ6c8h3s6QqT.jpg", meta: "Komedi • 6 Sezon" },
+      { title: "Fırtına", img: "https://image.tmdb.org/t/p/w500/9od7uGQw6bYQ6c8h3s6QqT9O1I.jpg", meta: "Drama • 1 Sezon" },
+    ]
+  },
+  {
+    title: "Yeni Çıkan Filmler",
+    items: [
+      { title: "Gece Yarısı", img: "https://image.tmdb.org/t/p/w500/7uGQw6bYQ6c8h3s6QqT9O1Iy9o.jpg", meta: "Korku • 2026" },
+      { title: "Altın Çağ", img: "https://image.tmdb.org/t/p/w500/6bYQ6c8h3s6QqT9O1Iy9od7uG.jpg", meta: "Dram • 2026" },
+      { title: "Hızlı ve Öfkeli: Son", img: "https://image.tmdb.org/t/p/w500/3s6QqT9O1Iy9od7uGQw6bYQ6c.jpg", meta: "Aksiyon • 2026" },
+      { title: "Uzaylı İstilası", img: "https://image.tmdb.org/t/p/w500/8h3s6QqT9O1Iy9od7uGQw6bYQ.jpg", meta: "Bilim Kurgu • 2025" },
+      { title: "Kırmızı Oda", img: "https://image.tmdb.org/t/p/w500/2QqT9O1Iy9od7uGQw6bYQ6c8h.jpg", meta: "Gerilim • 2025" },
+      { title: "Son Tren", img: "https://image.tmdb.org/t/p/w500/5T9O1Iy9od7uGQw6bYQ6c8h3s.jpg", meta: "Aksiyon • 2026" },
+    ]
+  }
+];
+
+// ==========================================================
+// 2. SATIRLARI RENDER ET
+// ==========================================================
+const rowsContainer = document.getElementById('rows');
+
+function renderRows() {
+  rowsContainer.innerHTML = rows.map((row, rowIdx) => `
+    <section class="row">
+      <h2 class="row-title">${row.title}</h2>
+      <div class="row-container">
+        <button class="row-arrow left" onclick="scrollRow(${rowIdx}, -1)">‹</button>
+        <div class="row-posters" id="row-${rowIdx}">
+          ${row.items.map(item => `
+            <div class="card" onclick="openModal('${item.title}','${item.img}','${item.meta}','Bu içerik hakkında detaylı bilgi. Demo amaçlı örnek açıklama metni.')">
+              <img src="${item.img}" alt="${item.title}" onerror="this.style.display='none'; this.parentElement.style.background='linear-gradient(135deg,#333,#111)'">
+              <div class="card-overlay">
+                <div class="play-icon">▶</div>
+                <div class="title">${item.title}</div>
+                <div class="meta">${item.meta}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <button class="row-arrow right" onclick="scrollRow(${rowIdx}, 1)">›</button>
+      </div>
+    </section>
+  `).join('');
+}
+
+// ==========================================================
+// 3. YATAY KAYDIRMA
+// ==========================================================
+function scrollRow(rowIdx, direction) {
+  const container = document.getElementById(`row-${rowIdx}`);
+  const scrollAmount = container.clientWidth * 0.8;
+  container.scrollBy({ left: scrollAmount * direction, behavior: 'smooth' });
+}
+
+// ==========================================================
+// 4. MODAL AÇ / KAPAT
+// ==========================================================
+const modal = document.getElementById('modal');
+
+function openModal(title, img, meta, desc) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalHero').style.backgroundImage = `url('${img}')`;
+  document.getElementById('modalMeta').innerHTML = meta.split('•').map(m => `<span>${m.trim()}</span>`).join('<span>•</span>');
+  document.getElementById('modalDesc').textContent = desc;
+  modal.classList.add('active');
+}
+
+function closeModal() {
+  modal.classList.remove('active');
+}
+
+modal.addEventListener('click', (e) => {
+  if (e.target === modal) closeModal();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// ==========================================================
+// 5. NAVBAR SCROLL EFEKTİ
+// ==========================================================
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+  navbar.classList.toggle('scrolled', window.scrollY > 50);
+});
+
+// ==========================================================
+// 6. BAŞLAT
+// ==========================================================
+renderRows();
+</script>
+
+</body>
+</html>
